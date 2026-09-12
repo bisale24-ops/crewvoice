@@ -123,8 +123,19 @@ async def _run_live(ws: WebSocket, sheet: Timesheet) -> None:
                     sheet.last_utterance = text
                 await _send(ws, {"type": "user", "text": text})
 
+            elif kind == "transcript.user.delta":
+                # partials, so the foreman sees himself being heard
+                await _send(ws, {"type": "user_partial", "text": event.get("text", "")})
+
             elif kind == "transcript.agent":
                 await _send(ws, {"type": "agent", "text": event.get("text", "")})
+
+            elif kind == "transcript.agent.delta":
+                await _send(ws, {"type": "agent_delta", "text": event.get("delta", "")})
+
+            elif kind == "input.speech.started":
+                # barge-in: stop the agent's audio the moment the foreman talks over it
+                await _send(ws, {"type": "interrupted"})
 
             elif kind == "reply.audio":
                 await _send(ws, {"type": "audio", "data": event.get("data", "")})

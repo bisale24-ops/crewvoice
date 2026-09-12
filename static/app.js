@@ -34,6 +34,35 @@ function escapeHtml(text) {
   }[c]));
 }
 
+// Partial transcripts render as one ghost line that is replaced by the final text.
+const partials = { user: null, agent: null };
+
+function partialLine(kind) {
+  if (!partials[kind]) {
+    partials[kind] = addLine(`${kind} partial`, "");
+    partials[kind].style.opacity = "0.55";
+  }
+  return partials[kind];
+}
+
+function showPartial(kind, text) {
+  partialLine(kind).textContent = text || "";
+  els.log.scrollTop = els.log.scrollHeight;
+}
+
+function appendPartial(kind, text) {
+  const line = partialLine(kind);
+  line.textContent += text || "";
+  els.log.scrollTop = els.log.scrollHeight;
+}
+
+function clearPartial(kind) {
+  if (partials[kind]) {
+    partials[kind].remove();
+    partials[kind] = null;
+  }
+}
+
 function renderSheet(sheet) {
   const entries = sheet.entries || [];
   if (!entries.length) {
@@ -70,10 +99,18 @@ function handleEvent(msg) {
     case "sheet":
       renderSheet(msg.sheet);
       break;
+    case "user_partial":
+      showPartial("user", msg.text);
+      break;
     case "user":
+      clearPartial("user");
       if (msg.text) addLine("user", escapeHtml(msg.text));
       break;
+    case "agent_delta":
+      appendPartial("agent", msg.text);
+      break;
     case "agent":
+      clearPartial("agent");
       if (msg.text) addLine("agent", escapeHtml(msg.text));
       break;
     case "tool": {
