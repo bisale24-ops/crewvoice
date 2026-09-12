@@ -10,37 +10,41 @@ from __future__ import annotations
 import csv
 import io
 import itertools
+import unicodedata
 import time
 from dataclasses import dataclass, field, asdict
 from difflib import get_close_matches
 
-# The crew this is built for speaks Russian on site while payroll keeps Latin
-# spellings, so "Азамат" has to land on "Azamat Sultanov" without a second list.
+# Speech recognition writes "Jose"; payroll has "José"; the foreman says a
+# nickname. All three have to land on one person, so names are folded to bare
+# lowercase ASCII before they are compared - accents dropped, and Cyrillic
+# transliterated for crews that mix alphabets.
 _CYRILLIC = {
     "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "e",
     "ж": "zh", "з": "z", "и": "i", "й": "y", "к": "k", "л": "l", "м": "m",
     "н": "n", "о": "o", "п": "p", "р": "r", "с": "s", "т": "t", "у": "u",
     "ф": "f", "х": "kh", "ц": "ts", "ч": "ch", "ш": "sh", "щ": "sch",
     "ъ": "", "ы": "y", "ь": "", "э": "e", "ю": "yu", "я": "ya",
-    # Kyrgyz letters that Russian does not have
-    "ң": "n", "ө": "o", "ү": "u",
 }
 
 
-def translit(text: str) -> str:
-    """Fold a spoken name to lowercase Latin. Latin input passes through."""
-    return "".join(_CYRILLIC.get(ch, ch) for ch in (text or "").lower())
+def fold(text: str) -> str:
+    """Fold a spoken or written name to bare lowercase ASCII."""
+    lowered = (text or "").lower()
+    lowered = "".join(_CYRILLIC.get(ch, ch) for ch in lowered)
+    stripped = unicodedata.normalize("NFKD", lowered)
+    return "".join(ch for ch in stripped if not unicodedata.combining(ch))
 
-# A real deployment pulls this from CrewSheet.  Hard-coded roster keeps the
-# demo self-contained and, more importantly, gives the agent something to
-# check heard names against.
+
+# A real deployment pulls this from CrewSheet. A hard-coded roster keeps the
+# demo self-contained and gives the agent something to check heard names against.
 DEFAULT_ROSTER = [
-    "Azamat Sultanov",
-    "Marat Beishenov",
-    "Bekzat Orozov",
-    "Daniyar Ismailov",
-    "Nurlan Toktogulov",
-    "Sergey Kim",
+    "José Ramírez",
+    "Luis Herrera",
+    "Miguel Santos",
+    "Andriy Koval",
+    "Marcus Webb",
+    "Tuan Nguyen",
 ]
 
 MAX_HOURS_PER_DAY = 16.0
@@ -85,15 +89,22 @@ class Timesheet:
         spoken = (spoken or "").strip()
         if not spoken:
             return None, []
-        key = translit(spoken)
-        lowered = {translit(name): name for name in self.roster}
+        key = fold(spoken)
+        lowered = {fold(name): name for name in self.roster}
 
         if key in lowered:
             return lowered[key], []
 
-        first_names = {translit(name.split()[0]): name for name in self.roster}
+        first_names = {fold(name.split()[0]): name for name in self.roster}
         if key in first_names:
             return first_names[key], []
+
+        surnames: dict[str, list[str]] = {}
+        for name in self.roster:
+            surnames.setdefault(fold(name.split()[-1]), []).append(name)
+        if key in surnames:
+            hits = surnames[key]
+            return (hits[0], []) if len(hits) == 1 else (None, hits)
 
         # "Bek" for "Bekzat" - a prefix of a first name, long enough to mean something.
         if len(key) >= 3:

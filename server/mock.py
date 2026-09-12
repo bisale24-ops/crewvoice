@@ -17,14 +17,14 @@ NUMBER_WORDS = {
     "seven": 7, "eight": 8, "nine": 9, "ten": 10, "eleven": 11, "twelve": 12,
     "thirteen": 13, "fourteen": 14, "fifteen": 15, "sixteen": 16, "seventeen": 17,
     "eighteen": 18, "nineteen": 19, "twenty": 20, "half": 0.5,
-    # Russian, because the crew this is built for speaks it
-    "ноль": 0, "один": 1, "два": 2, "три": 3, "четыре": 4, "пять": 5, "шесть": 6,
-    "семь": 7, "восемь": 8, "девять": 9, "десять": 10, "одиннадцать": 11,
-    "двенадцать": 12, "двадцать": 20,
+    # Spanish, because that is who is on the scaffolding
+    "uno": 1, "dos": 2, "tres": 3, "cuatro": 4, "cinco": 5, "seis": 6,
+    "siete": 7, "ocho": 8, "nueve": 9, "diez": 10, "once": 11, "doce": 12,
+    "veinte": 20, "media": 0.5,
 }
 
-YES = {"yes", "yeah", "yep", "correct", "right", "da", "да", "ага", "верно"}
-NO = {"no", "nope", "wrong", "нет", "не"}
+YES = {"yes", "yeah", "yep", "correct", "right", "si", "sí", "claro", "exacto"}
+NO = {"no", "nope", "wrong", "incorrecto"}
 
 
 def _to_hours(token: str) -> float | None:
@@ -59,12 +59,12 @@ class MockAgent:
             out.append({"kind": "say", "text": "Dropped it. Say the name and hours again."})
             return out
 
-        if lowered in {"done", "finished", "that's it", "review", "всё", "все"}:
+        if lowered in {"done", "finished", "that's it", "review", "listo", "ya"}:
             out.append(self._call("review_day", {}))
             out.append({"kind": "say", "text": out[-1]["result"]["say"]})
             return out
 
-        absent = re.match(r"(.+?)\s+(?:was\s+)?(?:absent|off|did not work|didn't work|не вышел)\b(.*)", text, re.I)
+        absent = re.match(r"(.+?)\s+(?:was\s+)?(?:absent|off|did not work|didn't work|no vino|no trabajo|falto)\b(.*)", text, re.I)
         if absent:
             out.append(self._call("mark_absent", {
                 "worker_name": absent.group(1).strip(),
@@ -73,7 +73,7 @@ class MockAgent:
             out.append({"kind": "say", "text": out[-1]["result"]["say"]})
             return out
 
-        hours = re.match(r"(.+?)\s+([\w.,]+)\s*(?:hours?|hrs?|часов|часа|ч)\b(.*)", text, re.I)
+        hours = re.match(r"(.+?)\s+([\w.,]+)\s*(?:hours?|hrs?|horas?|h)\b(.*)", text, re.I)
         if hours:
             value = _to_hours(hours.group(2))
             if value is None:
@@ -98,7 +98,7 @@ class MockAgent:
 
         out.append({
             "kind": "say",
-            "text": "Say it as a name and hours, for example 'Azamat nine hours'. Say 'done' to review.",
+            "text": "Say it as a name and hours, for example 'Jose nine hours'. Say 'done' to review.",
         })
         return out
 

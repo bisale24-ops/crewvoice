@@ -40,13 +40,18 @@ Without a key the app still runs: it falls back to a scripted agent driven by a
 text box, which exercises the same tools and the same rules (`CREWVOICE_MOCK=1`
 forces it). Try: `Azamat nine hours` → `yes` → `Sergey 20 hours` → `done`.
 
-## Languages
+## Names and languages
 
-Crews here work in Russian and Kyrgyz while payroll keeps Latin spellings, so
-spoken names are folded through transliteration before they meet the roster:
-"Азамат" lands on `Azamat Sultanov`, "Бек" on `Bekzat Orozov`. The agent is told
-to pass names through exactly as heard, in whatever alphabet, and to answer in
-the language it was spoken to.
+A crew list says `José Ramírez`. Speech recognition writes `Jose`. The foreman
+says `Ramirez`, or just `Jose`, or answers in Spanish. Names are folded to bare
+lowercase ASCII on both sides before they are compared - accents dropped,
+first names, surnames and short forms all indexed - so the same person is found
+however the name arrived. Anything that still does not resolve comes back as a
+question with the candidates, because paying the wrong Jose is worse than
+asking.
+
+The agent answers in the language it was spoken to; AssemblyAI's model handles
+the switch mid-sentence, which is how bilingual sites actually talk.
 
 ## Deploy
 
