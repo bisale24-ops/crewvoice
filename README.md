@@ -40,6 +40,20 @@ Without a key the app still runs: it falls back to a scripted agent driven by a
 text box, which exercises the same tools and the same rules (`CREWVOICE_MOCK=1`
 forces it). Try: `Azamat nine hours` → `yes` → `Sergey 20 hours` → `done`.
 
+## Languages
+
+Crews here work in Russian and Kyrgyz while payroll keeps Latin spellings, so
+spoken names are folded through transliteration before they meet the roster:
+"Азамат" lands on `Azamat Sultanov`, "Бек" on `Bekzat Orozov`. The agent is told
+to pass names through exactly as heard, in whatever alphabet, and to answer in
+the language it was spoken to.
+
+## Deploy
+
+`render.yaml` in the repo root is a Render blueprint: New → Blueprint → pick this
+repo, then set `ASSEMBLYAI_API_KEY` in the dashboard. The free instance sleeps
+after ~15 minutes, so open the URL once before showing it to anyone.
+
 ## How it fits together
 
 ```

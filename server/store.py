@@ -14,6 +14,23 @@ import time
 from dataclasses import dataclass, field, asdict
 from difflib import get_close_matches
 
+# The crew this is built for speaks Russian on site while payroll keeps Latin
+# spellings, so "Азамат" has to land on "Azamat Sultanov" without a second list.
+_CYRILLIC = {
+    "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "e",
+    "ж": "zh", "з": "z", "и": "i", "й": "y", "к": "k", "л": "l", "м": "m",
+    "н": "n", "о": "o", "п": "p", "р": "r", "с": "s", "т": "t", "у": "u",
+    "ф": "f", "х": "kh", "ц": "ts", "ч": "ch", "ш": "sh", "щ": "sch",
+    "ъ": "", "ы": "y", "ь": "", "э": "e", "ю": "yu", "я": "ya",
+    # Kyrgyz letters that Russian does not have
+    "ң": "n", "ө": "o", "ү": "u",
+}
+
+
+def translit(text: str) -> str:
+    """Fold a spoken name to lowercase Latin. Latin input passes through."""
+    return "".join(_CYRILLIC.get(ch, ch) for ch in (text or "").lower())
+
 # A real deployment pulls this from CrewSheet.  Hard-coded roster keeps the
 # demo self-contained and, more importantly, gives the agent something to
 # check heard names against.
@@ -68,20 +85,21 @@ class Timesheet:
         spoken = (spoken or "").strip()
         if not spoken:
             return None, []
-        lowered = {name.lower(): name for name in self.roster}
+        key = translit(spoken)
+        lowered = {translit(name): name for name in self.roster}
 
-        if spoken.lower() in lowered:
-            return lowered[spoken.lower()], []
+        if key in lowered:
+            return lowered[key], []
 
-        first_names = {name.split()[0].lower(): name for name in self.roster}
-        if spoken.lower() in first_names:
-            return first_names[spoken.lower()], []
+        first_names = {translit(name.split()[0]): name for name in self.roster}
+        if key in first_names:
+            return first_names[key], []
 
         # "Bek" for "Bekzat" - a prefix of a first name, long enough to mean something.
-        if len(spoken) >= 3:
+        if len(key) >= 3:
             prefixed = [
                 name for first, name in first_names.items()
-                if first.startswith(spoken.lower())
+                if first.startswith(key)
             ]
             if len(prefixed) == 1:
                 return prefixed[0], []
@@ -89,7 +107,7 @@ class Timesheet:
                 return None, prefixed
 
         pool = list(lowered) + list(first_names)
-        hits = get_close_matches(spoken.lower(), pool, n=3, cutoff=0.72)
+        hits = get_close_matches(key, pool, n=3, cutoff=0.72)
         resolved, seen = [], set()
         for hit in hits:
             name = lowered.get(hit) or first_names.get(hit)
