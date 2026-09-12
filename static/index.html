@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CrewVoice - spoken timesheets that can be audited</title>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header>
+  <div class="brand">
+    <span class="dot"></span>
+    <div>
+      <h1>CrewVoice</h1>
+      <p class="sub">The foreman talks. Payroll gets numbers it can prove.</p>
+    </div>
+  </div>
+  <div class="actions">
+    <span id="mode" class="pill">connecting…</span>
+    <button id="talk" class="primary" disabled>Start talking</button>
+    <a id="export" class="ghost" href="#" hidden>Export CSV</a>
+  </div>
+</header>
+
+<main>
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Today's sheet</h2>
+      <span id="totals" class="muted"></span>
+    </div>
+    <table id="sheet">
+      <thead>
+        <tr><th>Worker</th><th>Hours</th><th>Status</th><th>Heard as</th></tr>
+      </thead>
+      <tbody id="rows">
+        <tr class="empty"><td colspan="4">Nothing logged yet.</td></tr>
+      </tbody>
+    </table>
+    <p class="note">
+      Only <strong>confirmed</strong> rows go into the export. A row the agent was not
+      told to confirm stays out of payroll, on purpose.
+    </p>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Conversation</h2>
+      <span class="muted">every entry keeps the words it came from</span>
+    </div>
+    <div id="log" class="log"></div>
+    <form id="typed" class="typed" hidden autocomplete="off">
+      <input id="typedInput" placeholder="e.g. Azamat nine hours" />
+      <button class="ghost" type="submit">Send</button>
+    </form>
+  </section>
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
