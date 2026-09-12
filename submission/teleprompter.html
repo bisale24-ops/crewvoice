@@ -1,0 +1,387 @@
+<title>CrewVoice Shoot Script</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root {
+    --paper: #f5f2ec;
+    --card: #fffdf9;
+    --ink: #1f1c18;
+    --ink-soft: #6b6459;
+    --rule: #e0d9cc;
+    --amber: #c8720f;
+    --amber-soft: #f6e6cf;
+    --steel: #3f5668;
+    --display: "Oswald", "Haettenschweiler", Impact, sans-serif;
+    --read: "Source Serif 4", Georgia, "Times New Roman", serif;
+    --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #16151a;
+      --card: #1e1d23;
+      --ink: #f0ece4;
+      --ink-soft: #9d968a;
+      --rule: #322f38;
+      --amber: #edaa53;
+      --amber-soft: #3a2c19;
+      --steel: #8fb0c8;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #16151a;
+    --card: #1e1d23;
+    --ink: #f0ece4;
+    --ink-soft: #9d968a;
+    --rule: #322f38;
+    --amber: #edaa53;
+    --amber-soft: #3a2c19;
+    --steel: #8fb0c8;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--read);
+    font-size: 17px;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px 96px; }
+
+  /* ---- transport bar ---- */
+  .transport {
+    position: sticky; top: 0; z-index: 5;
+    display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+    padding: 14px 24px;
+    background: color-mix(in srgb, var(--paper) 92%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .clock {
+    font-family: var(--mono); font-size: 30px; font-weight: 600;
+    font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+  }
+  .clock.over { color: var(--amber); }
+  .transport .now {
+    font-family: var(--display); text-transform: uppercase; letter-spacing: 0.08em;
+    font-size: 13px; color: var(--ink-soft); flex: 1 1 200px;
+  }
+  .transport .now b { color: var(--ink); font-weight: 600; }
+  button {
+    font-family: var(--display); text-transform: uppercase; letter-spacing: 0.07em;
+    font-size: 13px; padding: 9px 18px; border-radius: 2px; cursor: pointer;
+    border: 1px solid var(--ink); background: transparent; color: var(--ink);
+  }
+  button.go { background: var(--ink); color: var(--paper); }
+  button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+  /* ---- masthead ---- */
+  header.mast { padding: 40px 0 28px; border-bottom: 3px solid var(--ink); }
+  .kicker {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--amber); margin: 0 0 10px;
+  }
+  h1 {
+    font-family: var(--display); font-weight: 600; font-size: clamp(34px, 6vw, 56px);
+    line-height: 1.02; margin: 0; text-transform: uppercase; letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  .standfirst { margin: 14px 0 0; max-width: 62ch; color: var(--ink-soft); }
+  .specs {
+    display: flex; flex-wrap: wrap; gap: 0 32px; margin: 20px 0 0;
+    font-family: var(--mono); font-size: 12.5px; color: var(--ink-soft);
+  }
+  .specs b { color: var(--ink); font-weight: 600; }
+
+  /* ---- segments ---- */
+  .seg {
+    display: grid; grid-template-columns: 108px 1fr; gap: 0 28px;
+    padding: 30px 0; border-bottom: 1px solid var(--rule);
+  }
+  @media (max-width: 680px) { .seg { grid-template-columns: 1fr; gap: 12px; } }
+  .tc { position: relative; }
+  .tc .code {
+    font-family: var(--mono); font-size: 13px; font-weight: 600;
+    font-variant-numeric: tabular-nums; color: var(--ink-soft);
+  }
+  .tc .bar {
+    margin-top: 8px; height: 4px; border-radius: 2px;
+    background: var(--rule); overflow: hidden;
+  }
+  .tc .bar i { display: block; height: 100%; width: 0; background: var(--amber); }
+  .seg h2 {
+    font-family: var(--display); text-transform: uppercase; letter-spacing: 0.04em;
+    font-size: 20px; font-weight: 500; margin: -4px 0 14px;
+  }
+  .seg.live { background: color-mix(in srgb, var(--amber-soft) 60%, transparent); }
+  .seg.live .tc .code { color: var(--amber); }
+  .seg.done h2 { color: var(--ink-soft); }
+
+  .stage {
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: var(--ink-soft); margin: 0 0 14px; max-width: 68ch;
+  }
+  .stage b { color: var(--ink); font-weight: 600; }
+
+  .say, .vo {
+    margin: 0 0 14px; padding: 12px 0 12px 18px; max-width: 60ch;
+    font-size: 21px; line-height: 1.45;
+  }
+  .vo { border-left: 2px solid var(--rule); }
+  .say { border-left: 4px solid var(--amber); font-style: italic; }
+  .tag {
+    display: block; font-family: var(--mono); font-style: normal;
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-soft); margin-bottom: 6px;
+  }
+  .say .tag { color: var(--amber); }
+  .beat {
+    font-family: var(--mono); font-size: 12.5px; color: var(--steel);
+    border-left: 2px dashed var(--steel); padding-left: 14px; margin: 0 0 14px;
+    max-width: 66ch;
+  }
+
+  /* ---- checklist ---- */
+  .checks { margin-top: 44px; }
+  .checks h2 {
+    font-family: var(--display); text-transform: uppercase; letter-spacing: 0.06em;
+    font-size: 22px; margin: 0 0 4px;
+  }
+  .checks p.lede { margin: 0 0 18px; color: var(--ink-soft); max-width: 60ch; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+  label.check {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: var(--card); border: 1px solid var(--rule);
+    padding: 13px 15px; cursor: pointer; font-size: 15.5px; line-height: 1.45;
+  }
+  label.check input { margin: 4px 0 0; accent-color: var(--amber); flex: none; }
+  label.check.ticked { color: var(--ink-soft); text-decoration: line-through; }
+  label.check:focus-within { outline: 2px solid var(--amber); outline-offset: 1px; }
+
+  .avoid { margin-top: 34px; border-top: 3px solid var(--ink); padding-top: 20px; }
+  .avoid h2 {
+    font-family: var(--display); text-transform: uppercase; letter-spacing: 0.06em;
+    font-size: 18px; margin: 0 0 12px;
+  }
+  .avoid ul { margin: 0; padding-left: 20px; max-width: 64ch; }
+  .avoid li { margin-bottom: 8px; }
+  .avoid li b { font-weight: 600; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="transport">
+  <span class="clock" id="clock">0:00</span>
+  <button class="go" id="run">Start</button>
+  <button id="reset">Reset</button>
+  <span class="now" id="now">Space to roll · R to reset · target <b>2:30</b></span>
+</div>
+
+<div class="wrap">
+  <header class="mast">
+    <p class="kicker">AssemblyAI Voice Agent Hackathon · submission by 30 Sep</p>
+    <h1>CrewVoice shoot script</h1>
+    <p class="standfirst">
+      Six segments, two and a half minutes. Amber lines are spoken into the microphone at the
+      agent and must be audible in the take; plain lines are voice-over laid on afterwards.
+    </p>
+    <div class="specs">
+      <span><b>2:30</b> target</span>
+      <span><b>1280×720</b> screen capture</span>
+      <span><b>English</b> narration</span>
+      <span><b>3</b> takes of the live pass</span>
+    </div>
+  </header>
+
+  <section class="seg" data-len="20">
+    <div class="tc"><span class="code">0:00–0:20</span><span class="bar"><i></i></span></div>
+    <div>
+      <h2>The argument</h2>
+      <p class="stage"><b>On screen:</b> a spreadsheet timesheet, cursor tracking along one row;
+        a phone thread with the foreman open beside it.</p>
+      <p class="vo"><span class="tag">Voice-over</span>End of the month on a construction site.
+        Payroll has a number for Jose. Jose says the number is wrong. The only record of what was
+        actually said is a foreman's memory and a smudged notebook. Somebody is going to lose this
+        argument without any evidence.</p>
+    </div>
+  </section>
+
+  <section class="seg" data-len="15">
+    <div class="tc"><span class="code">0:20–0:35</span><span class="bar"><i></i></span></div>
+    <div>
+      <h2>What it is</h2>
+      <p class="stage"><b>On screen:</b> CrewVoice opens, sheet empty, cursor resting on Start talking.</p>
+      <p class="vo"><span class="tag">Voice-over</span>CrewVoice takes the foreman's spoken end-of-day
+        report and turns it into a timesheet that can be audited line by line. It runs on AssemblyAI's
+        Voice Agent API — speech in, speech out, tool calls in the middle.</p>
+    </div>
+  </section>
+
+  <section class="seg" data-len="30">
+    <div class="tc"><span class="code">0:35–1:05</span><span class="bar"><i></i></span></div>
+    <div>
+      <h2>The clean pass</h2>
+      <p class="stage"><b>Do:</b> press Start talking, then speak. Let the agent's own voice answer —
+        don't talk over it.</p>
+      <p class="say"><span class="tag">Say to the agent</span>Jose worked nine hours today.</p>
+      <p class="beat">Agent reads back “José Ramírez, nine hours — is that right?” A yellow
+        <b>pending</b> row appears. Hold the cursor on it so the word is readable.</p>
+      <p class="say"><span class="tag">Say to the agent</span>Yes.</p>
+      <p class="vo"><span class="tag">Voice-over</span>Nine hours is on the sheet — but only because
+        I said yes out loud. Until then it sat in pending, outside payroll.</p>
+    </div>
+  </section>
+
+  <section class="seg" data-len="30">
+    <div class="tc"><span class="code">1:05–1:35</span><span class="bar"><i></i></span></div>
+    <div>
+      <h2>Three refusals</h2>
+      <p class="stage"><b>Do:</b> run all three without stopping to explain — the voice-over goes on
+        top. This is the segment the submission is judged on.</p>
+      <p class="say"><span class="tag">Say to the agent</span>Miguel worked twenty hours.</p>
+      <p class="say"><span class="tag">Say to the agent</span>Bobby worked eight hours.</p>
+      <p class="say"><span class="tag">Say to the agent</span>Luis trabajó ocho horas. <em>— then —</em> Sí.</p>
+      <p class="vo"><span class="tag">Voice-over</span>Twenty hours in a day is a mishearing, not a
+        shift. A name that is not on the crew list is a question, never a guess. And the crew switches
+        to Spanish mid-shift, so the agent does too. None of these three rules live in the prompt —
+        they live in the tools, which is why the model cannot talk its way past them.</p>
+    </div>
+  </section>
+
+  <section class="seg" data-len="30">
+    <div class="tc"><span class="code">1:35–2:05</span><span class="bar"><i></i></span></div>
+    <div>
+      <h2>The evidence</h2>
+      <p class="stage"><b>On screen:</b> the HEARD AS column — row <b>José Ramírez</b> carrying
+        <b>Jose</b>. Hover it so the original sentence surfaces, then press Export CSV and open the file.</p>
+      <p class="vo"><span class="tag">Voice-over</span>Speech recognition wrote “Jose”. Payroll has
+        “José”, with an accent. Same man — the roster match folds both to the same key, and the sheet
+        keeps what was actually heard.</p>
+      <p class="vo"><span class="tag">Voice-over</span>The export carries two extra columns: what
+        recognition heard, and the sentence it came from. When Jose disputes his hours, the record
+        settles it instead of whoever remembers harder. Rows nobody confirmed are simply not in this file.</p>
+    </div>
+  </section>
+
+  <section class="seg" data-len="25">
+    <div class="tc"><span class="code">2:05–2:30</span><span class="bar"><i></i></span></div>
+    <div>
+      <h2>Close</h2>
+      <p class="stage"><b>On screen:</b> the architecture diagram from the README, then the KHLab mark.</p>
+      <p class="vo"><span class="tag">Voice-over</span>Voice Agent API for the conversation, a tool
+        layer that refuses to write anything it was not told to confirm. Built in three weeks, running
+        on a free instance, ready for a crew of six or six hundred. CrewVoice — the foreman talks,
+        payroll gets numbers it can prove.</p>
+    </div>
+  </section>
+
+  <section class="checks">
+    <h2>Before you roll</h2>
+    <p class="lede">Ticks are remembered on this device, so you can close the page between takes.</p>
+    <div class="grid" id="checklist">
+      <label class="check"><input type="checkbox"><span>API key in <code>.env</code>, server started
+        <b>without</b> <code>CREWVOICE_MOCK</code> — no “scripted agent” pill in frame.</span></label>
+      <label class="check"><input type="checkbox"><span>Render instance woken 5 minutes early; the free
+        tier sleeps and takes ~50 s to come back.</span></label>
+      <label class="check"><input type="checkbox"><span>Server restarted so the sheet starts empty.</span></label>
+      <label class="check"><input type="checkbox"><span>Browser zoom at 125% — a judge may watch this
+        on a phone.</span></label>
+      <label class="check"><input type="checkbox"><span>Headset or external mic. Your voice quality
+        reads as product quality.</span></label>
+      <label class="check"><input type="checkbox"><span>Three takes of the live pass. If the agent
+        mishears, keep the take where it <b>asked</b> — that is the behaviour being sold.</span></label>
+      <label class="check"><input type="checkbox"><span>Under 3:00, uploaded unlisted, link pasted into
+        the submission.</span></label>
+    </div>
+  </section>
+
+  <section class="avoid">
+    <h2>Don't say</h2>
+    <ul>
+      <li><b>“We use cutting-edge AI models.”</b> The judges build those models.</li>
+      <li><b>Roadmap promises.</b> Scoring covers what is on screen, nothing that is coming later.</li>
+      <li><b>Apologies for plain design.</b> A timesheet should look like a timesheet.</li>
+      <li><b>Invented statistics.</b> No “$X billion lost to payroll errors” — an unverifiable number
+        is the fastest way to lose a technical audience.</li>
+    </ul>
+  </section>
+</div>
+
+<script>
+  const segs = [...document.querySelectorAll(".seg")];
+  const lens = segs.map((s) => Number(s.dataset.len));
+  const total = lens.reduce((a, b) => a + b, 0);
+  const clock = document.getElementById("clock");
+  const now = document.getElementById("now");
+  const runBtn = document.getElementById("run");
+
+  let t = 0, timer = null;
+
+  const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+
+  function paint() {
+    clock.textContent = fmt(t);
+    clock.classList.toggle("over", t > total);
+    let start = 0, live = -1;
+    segs.forEach((seg, i) => {
+      const end = start + lens[i];
+      const inside = t >= start && t < end;
+      const fill = t >= end ? 1 : inside ? (t - start) / lens[i] : 0;
+      seg.querySelector(".bar i").style.width = `${fill * 100}%`;
+      seg.classList.toggle("live", inside);
+      seg.classList.toggle("done", t >= end);
+      if (inside) live = i;
+      start = end;
+    });
+    if (!timer && t === 0) {
+      now.innerHTML = "Space to roll · R to reset · target <b>2:30</b>";
+    } else if (live >= 0) {
+      const name = segs[live].querySelector("h2").textContent;
+      const left = lens.slice(0, live + 1).reduce((a, b) => a + b, 0) - t;
+      now.innerHTML = `Now: <b>${name}</b> · ${left}s left in this beat`;
+    } else {
+      now.innerHTML = `<b>Over length</b> by ${fmt(t - total)} — trim the close`;
+    }
+  }
+
+  function toggle() {
+    if (timer) {
+      clearInterval(timer); timer = null;
+      runBtn.textContent = "Resume"; runBtn.classList.remove("go");
+    } else {
+      timer = setInterval(() => { t += 1; paint(); }, 1000);
+      runBtn.textContent = "Pause"; runBtn.classList.add("go");
+    }
+    paint();
+  }
+
+  function reset() {
+    clearInterval(timer); timer = null; t = 0;
+    runBtn.textContent = "Start"; runBtn.classList.add("go");
+    paint();
+  }
+
+  runBtn.addEventListener("click", toggle);
+  document.getElementById("reset").addEventListener("click", reset);
+  document.addEventListener("keydown", (e) => {
+    if (e.target.matches("input, textarea")) return;
+    if (e.code === "Space") { e.preventDefault(); toggle(); }
+    if (e.key.toLowerCase() === "r") reset();
+  });
+
+  // checklist: remembered per device, never anywhere else
+  const boxes = [...document.querySelectorAll("#checklist input")];
+  let saved = [];
+  try { saved = JSON.parse(localStorage.getItem("crewvoice.shoot") || "[]"); } catch (e) { saved = []; }
+  boxes.forEach((box, i) => {
+    box.checked = Boolean(saved[i]);
+    box.closest(".check").classList.toggle("ticked", box.checked);
+    box.addEventListener("change", () => {
+      box.closest(".check").classList.toggle("ticked", box.checked);
+      try {
+        localStorage.setItem("crewvoice.shoot", JSON.stringify(boxes.map((b) => b.checked)));
+      } catch (e) { /* private window: ticks just won't persist */ }
+    });
+  });
+
+  paint();
+</script>
