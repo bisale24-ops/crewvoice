@@ -147,7 +147,7 @@ async def _run_live(ws: WebSocket, sheet: Timesheet) -> None:
                 pending_results.append({
                     "type": "tool.result",
                     "call_id": event.get("call_id"),
-                    "result": json.dumps(result),
+                    "result": json.dumps(result, ensure_ascii=False),
                 })
                 await _send(ws, {"type": "tool", "name": name, "arguments": args, "result": result})
                 await _push_sheet(ws, sheet)

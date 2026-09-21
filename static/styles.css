@@ -76,6 +76,7 @@ tr.pending { background: color-mix(in srgb, var(--wait) 10%, transparent); }
 .line.tool b { color: var(--ink); }
 .line.tool.rejected { border-color: var(--wait); color: var(--wait); }
 .typed { display: flex; gap: 8px; margin-top: 12px; }
+.typed[hidden] { display: none; }
 .typed input {
   flex: 1; font: inherit; padding: 9px 12px; border-radius: 8px;
   border: 1px solid var(--line); background: var(--bg); color: var(--ink);
